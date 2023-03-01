@@ -13,23 +13,23 @@
 
 import { onMounted, onUnmounted, type Ref, ref } from 'vue'
 
-interface Preview {
+type Preview = {
   list: number
   target: number
 }
 
-interface IDType {
+type IDType = {
   id: number | string
 }
 
-export function useDragDrop<T extends IDType>(items: Array<T[]>): { lists: Ref<Array<T[]>> } {
+export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]> } {
   // can either pass a list of refs or classes, for both drop zones and
   // lists
 
   // if no drop zones are provided we can assume all of the lists
   // can accept items, treat them all as dropzones
 
-  const lists = ref(items) as Ref<Array<T[]>>
+  const lists = ref(items) as Ref<T[][]>
   let startingLists = JSON.parse(JSON.stringify(items)) // starting value before dragging
 
   let elem: HTMLElement | null = null // the real element that's currently being tracked
@@ -62,7 +62,7 @@ export function useDragDrop<T extends IDType>(items: Array<T[]>): { lists: Ref<A
       e.preventDefault()
 
       if (e.target instanceof HTMLElement) {
-        elem = e.target?.closest('.draggify') as HTMLElement
+        elem = e.target?.closest('.dragster') as HTMLElement
 
         if (!elem) return
 
@@ -93,14 +93,16 @@ export function useDragDrop<T extends IDType>(items: Array<T[]>): { lists: Ref<A
         // style the element to be spooky 👻 while dragging
         dragging.style.position = 'absolute'
         dragging.style.zIndex = '1000'
-        dragging.style.opacity = '1'
+        dragging.style.opacity = '.8'
         dragging.style.pointerEvents = 'none'
-        document.body.appendChild(dragging)
 
         startX = e.pageX
         startY = e.pageY
+
         dragging.style.left = startX - dragging.clientWidth / 2 + 'px'
         dragging.style.top = startY - dragging.clientHeight / 2 + 'px'
+
+        document.body.appendChild(dragging)
 
         window.addEventListener('mousemove', handleMouseMove)
         window.addEventListener('mouseup', handleMouseUp)
@@ -124,7 +126,7 @@ export function useDragDrop<T extends IDType>(items: Array<T[]>): { lists: Ref<A
     // it won't affect our check
     const target = document
       .elementFromPoint(e.clientX, e.clientY)
-      ?.closest('.draggify') as HTMLElement
+      ?.closest('.dragster') as HTMLElement
 
     if (!target) {
       targetIndex = -1
@@ -153,12 +155,12 @@ export function useDragDrop<T extends IDType>(items: Array<T[]>): { lists: Ref<A
     // if a preview has been added remove it on the next
     // occurrence
     if (addedPreview) {
-      lists.value[addedPreview.list].splice(addedPreview.target, 1)
+      lists.value[addedPreview.list]?.splice(addedPreview.target, 1)
     }
 
     // add the dragged item to the target list
     if (originalItem) {
-      lists.value[targetListIndex].splice(targetIndex, 0, originalItem)
+      lists.value[targetListIndex]?.splice(targetIndex, 0, originalItem)
     }
 
     // keep track of the preview item
