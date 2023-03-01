@@ -11,22 +11,26 @@
   of the provided lists
 */
 
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, type Ref, ref } from 'vue'
 
 interface Preview {
   list: number
   target: number
 }
 
-export function useDragDrop(items: Array<any>, drops: Array<any> | null) {
+interface IDType {
+  id: number | string
+}
+
+export function useDragDrop<T extends IDType>(items: Array<T[]>): { lists: Ref<Array<T[]>> } {
   // can either pass a list of refs or classes, for both drop zones and
   // lists
 
   // if no drop zones are provided we can assume all of the lists
   // can accept items, treat them all as dropzones
 
-  const lists = ref(items)
-  const startingLists = JSON.parse(JSON.stringify(items)) // starting value before dragging
+  const lists = ref(items) as Ref<Array<T[]>>
+  let startingLists = JSON.parse(JSON.stringify(items)) // starting value before dragging
 
   let elem: HTMLElement | null = null // the real element that's currently being tracked
   let dragging: HTMLElement | null | undefined = null // the copied element being dragged
@@ -45,6 +49,7 @@ export function useDragDrop(items: Array<any>, drops: Array<any> | null) {
   let targetListIndex = -1
   let targetIndex = -1
 
+  let originalItem: T | null = null // this is the original item being dragged
   let addedPreview: Preview | null = null // indeces of the preview
 
   onUnmounted(() => {
@@ -61,8 +66,6 @@ export function useDragDrop(items: Array<any>, drops: Array<any> | null) {
 
         if (!elem) return
 
-        // make the item invisible whilst dragging
-        elem.style.opacity = '0'
         dragging = elem?.cloneNode(true) as HTMLElement
 
         if (!dragging) {
@@ -72,15 +75,19 @@ export function useDragDrop(items: Array<any>, drops: Array<any> | null) {
         // find index of the dragged item
         // relative to the lists
         for (const [i, list] of Object.entries(lists.value)) {
-          originalIndex = list.findIndex(
-            (f: HTMLElement) => f.id.toString() === elem?.getAttribute('id')
-          )
+          originalIndex = list.findIndex((f) => f.id.toString() === elem?.getAttribute('id'))
 
           // if something is found break the loop
           if (originalIndex !== -1) {
             originalListIndex = Number(i)
             break
           }
+        }
+
+        if (!originalItem) {
+          originalItem = JSON.parse(JSON.stringify(lists.value[originalListIndex][originalIndex]))
+
+          lists.value[originalListIndex].splice(originalIndex, 1)
         }
 
         // style the element to be spooky 👻 while dragging
@@ -130,25 +137,17 @@ export function useDragDrop(items: Array<any>, drops: Array<any> | null) {
         break
       }
 
-      const found = list.find((f: HTMLElement) => f.id.toString() === target.getAttribute('id'))
+      const found = list.find((f) => f.id.toString() === target.getAttribute('id'))
 
       if (!found) {
         continue
       }
 
-      targetIndex = list.findIndex(
-        (f: HTMLElement) => f.id.toString() === target.getAttribute('id')
-      )
+      targetIndex = list.findIndex((f) => f.id.toString() === target.getAttribute('id'))
 
       targetListIndex = Number(i)
 
       break
-    }
-
-    // don't do anything if on the starting point
-    // might have to revisit this
-    if (targetIndex === originalIndex && originalListIndex === targetListIndex) {
-      return
     }
 
     // if a preview has been added remove it on the next
@@ -158,11 +157,9 @@ export function useDragDrop(items: Array<any>, drops: Array<any> | null) {
     }
 
     // add the dragged item to the target list
-    lists.value[targetListIndex].splice(
-      targetIndex,
-      0,
-      lists.value[originalListIndex][originalIndex]
-    )
+    if (originalItem) {
+      lists.value[targetListIndex].splice(targetIndex, 0, originalItem)
+    }
 
     // keep track of the preview item
     addedPreview = { list: targetListIndex, target: targetIndex }
@@ -183,10 +180,10 @@ export function useDragDrop(items: Array<any>, drops: Array<any> | null) {
       lists.value = JSON.parse(JSON.stringify(startingLists))
     } else {
       // ✅ SUCCESFULL DRAG ✅
-      // remove the original item on succesful drag
       // the preview has already added the item to
       // the list
-      lists.value[originalListIndex].splice(originalIndex, 1)
+      // if successful then overwrite the starting list
+      startingLists = JSON.parse(JSON.stringify(lists.value))
     }
 
     cleanUp()
@@ -201,6 +198,7 @@ export function useDragDrop(items: Array<any>, drops: Array<any> | null) {
     addedPreview = null
     targetListIndex = -1
     targetIndex = -1
+    originalItem = null
   }
 
   return {
