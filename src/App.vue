@@ -20,7 +20,7 @@ const array2 = reactive([
   { id: 246766, name: 'Grace' }
 ])
 
-const { lists } = useDragDrop({ items: [array1, array2] }, { drops: null })
+const { lists } = useDragDrop([array1, array2], null)
 
 onMounted(() => {
   console.log(lists)
@@ -31,7 +31,7 @@ onMounted(() => {
   <div class="lists">
     <div class="list-container">
       <div v-for="item in lists[0]" :key="item.id">
-        <div :id="item.id" class="slick-drag">
+        <div :id="item.id" class="draggify">
           <h2>
             {{ item.name }}
           </h2>
@@ -41,7 +41,7 @@ onMounted(() => {
 
     <div class="list-container">
       <div v-for="item in lists[1]" :key="item.id">
-        <div :id="item.id" class="slick-drag">
+        <div :id="item.id" class="draggify">
           <h2>
             {{ item.name }}
           </h2>
@@ -59,9 +59,10 @@ header {
 .lists {
   display: flex;
   gap: 2rem;
+  transition: 0.5s ease;
 }
 
-.slick-drag {
+.draggify {
   margin: 1rem;
   background: black;
   border: 1px solid white;
