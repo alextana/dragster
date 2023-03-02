@@ -37,20 +37,17 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
 
   let startX = 0 // The x-coordinate where the drag started
   let startY = 0 // The y-coordinate where the drag started
-  /*
-    INDECES TO KEEP TRACK OF
-    Original Index -> element that is being dragged
-    Original List Index -> the index of the list that hosted the starting element
-    Target Index -> index of the destination
-    Target List Index -> index of the list of destination
-  */
-  let originalIndex = -1
-  let originalListIndex = -1
-  let targetListIndex = -1
-  let targetIndex = -1
+
+  // 🔄 INDECES TO KEEP TRACK OF
+  let originalIndex = -1 // -> index of theelement that is being dragged
+  let originalListIndex = -1 // -> the index of the list that hosted the starting element
+  let targetListIndex = -1 // -> index of the list of destination
+  let targetIndex = -1 // -> index of the destination item
 
   let originalItem: T | null = null // this is the original item being dragged
   let addedPreview: Preview | null = null // indeces of the preview
+
+  let previousTarget: HTMLElement | null = null
 
   onUnmounted(() => {
     window.removeEventListener('mousemove', handleMouseMove)
@@ -58,6 +55,7 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
   })
 
   onMounted(() => {
+    // Add accessibility utils
     window.addEventListener('mousedown', function (e) {
       e.preventDefault()
 
@@ -99,10 +97,10 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
         startX = e.pageX
         startY = e.pageY
 
+        document.body.appendChild(dragging)
+
         dragging.style.left = startX - dragging.clientWidth / 2 + 'px'
         dragging.style.top = startY - dragging.clientHeight / 2 + 'px'
-
-        document.body.appendChild(dragging)
 
         window.addEventListener('mousemove', handleMouseMove)
         window.addEventListener('mouseup', handleMouseUp)
@@ -112,7 +110,6 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
 
   function handleMouseMove(e: MouseEvent) {
     e.preventDefault()
-    e.stopPropagation()
     if (!dragging) return
 
     const dx = e.pageX - startX
@@ -133,6 +130,13 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
       return
     }
 
+    // only do the expensive computation if needed
+    if (previousTarget && target === previousTarget) {
+      return
+    }
+
+    previousTarget = target
+
     // get the target element and assign target indeces
     for (const [i, list] of Object.entries(lists.value)) {
       if (!target.getAttribute('id')) {
@@ -150,6 +154,12 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
       targetListIndex = Number(i)
 
       break
+    }
+
+    // 🟡 only let the item back to the original position
+    // if it has previously been on another index
+    if (!addedPreview && targetIndex === originalIndex && originalListIndex === targetListIndex) {
+      return
     }
 
     // if a preview has been added remove it on the next
@@ -177,11 +187,11 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
     dragging = null
 
     if (targetIndex === -1) {
-      // ❌ UNSUCCESSFUL DRAG ❌
+      // ❌❌ UNSUCCESSFUL DRAG ❌❌
       // restore the list to starting value
       lists.value = JSON.parse(JSON.stringify(startingLists))
     } else {
-      // ✅ SUCCESFULL DRAG ✅
+      // ✅✅ SUCCESFULL DRAG ✅✅
       // the preview has already added the item to
       // the list
       // if successful then overwrite the starting list
