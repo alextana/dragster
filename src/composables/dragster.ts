@@ -1,5 +1,5 @@
 /*
-  DRAGGIFY
+  DRAGSTER
   drag and drop composable
 
   rules - an element can only be dragged
