@@ -12,15 +12,7 @@
 */
 
 import { onMounted, onUnmounted, type Ref, ref } from 'vue'
-
-type Preview = {
-  list: number
-  target: number
-}
-
-type IDType = {
-  id: number | string
-}
+import type { Preview, EventType, IDType } from './types'
 
 export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]> } {
   // can either pass a list of refs or classes, for both drop zones and
@@ -48,72 +40,87 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
   let addedPreview: Preview | null = null // indeces of the preview
 
   let previousTarget: HTMLElement | null = null
+  let isTouchDevice: boolean = false
 
   onUnmounted(() => {
-    window.removeEventListener('mousemove', handleMouseMove)
-    window.removeEventListener('mouseup', handleMouseUp)
+    removeEventListeners()
   })
 
   onMounted(() => {
-    // Add accessibility utils
-    window.addEventListener('mousedown', function (e) {
-      e.preventDefault()
+    isTouchDevice = typeof window.ontouchstart !== 'undefined'
 
-      if (e.target instanceof HTMLElement) {
-        elem = e.target?.closest('.dragster') as HTMLElement
-
-        if (!elem) return
-
-        dragging = elem?.cloneNode(true) as HTMLElement
-
-        if (!dragging) {
-          return
-        }
-
-        // find index of the dragged item
-        // relative to the lists
-        for (const [i, list] of Object.entries(lists.value)) {
-          originalIndex = list.findIndex((f) => f.id.toString() === elem?.getAttribute('id'))
-
-          // if something is found break the loop
-          if (originalIndex !== -1) {
-            originalListIndex = Number(i)
-            break
-          }
-        }
-
-        if (!originalItem) {
-          originalItem = JSON.parse(JSON.stringify(lists.value[originalListIndex][originalIndex]))
-
-          lists.value[originalListIndex].splice(originalIndex, 1)
-        }
-
-        // style the element to be spooky 👻 while dragging
-        dragging.style.position = 'absolute'
-        dragging.style.zIndex = '1000'
-        dragging.style.opacity = '.8'
-        dragging.style.pointerEvents = 'none'
-
-        startX = e.pageX
-        startY = e.pageY
-
-        document.body.appendChild(dragging)
-
-        dragging.style.left = startX - dragging.clientWidth / 2 + 'px'
-        dragging.style.top = startY - dragging.clientHeight / 2 + 'px'
-
-        window.addEventListener('mousemove', handleMouseMove)
-        window.addEventListener('mouseup', handleMouseUp)
-      }
-    })
+    isTouchDevice
+      ? window.addEventListener('touchstart', initialiseDrag, { passive: false })
+      : window.addEventListener('mousedown', initialiseDrag)
   })
 
-  function handleMouseMove(e: MouseEvent) {
+  function initialiseDrag(e: EventType) {
     e.preventDefault()
-    if (!dragging) return
+    if (e.target instanceof HTMLElement) {
+      elem = e.target?.closest('.dragster') as HTMLElement
 
-    const dx = e.pageX - startX
-    const dy = e.pageY - startY
+      if (!elem) {
+        return
+      }
+      dragging = elem?.cloneNode(true) as HTMLElement
+
+      if (!dragging) {
+        return
+      }
+
+      // find index of the dragged item
+      // relative to the lists
+      for (const [i, list] of Object.entries(lists.value)) {
+        originalIndex = list.findIndex((f) => f.id.toString() === elem?.getAttribute('id'))
+
+        // if something is found break the loop
+        if (originalIndex !== -1) {
+          originalListIndex = Number(i)
+          break
+        }
+      }
+
+      if (!originalItem) {
+        originalItem = JSON.parse(JSON.stringify(lists.value[originalListIndex][originalIndex]))
+
+        lists.value[originalListIndex].splice(originalIndex, 1)
+      }
+
+      // style the element to be spooky 👻 while dragging
+      dragging.style.position = 'absolute'
+      dragging.style.zIndex = '1000'
+      dragging.style.opacity = '.8'
+      dragging.style.pointerEvents = 'none'
+
+      startX = e instanceof TouchEvent ? e.touches[0].pageX : e.pageX
+      startY = e instanceof TouchEvent ? e.touches[0].pageY : e.pageY
+
+      document.body.appendChild(dragging)
+
+      dragging.style.left = startX - dragging.clientWidth / 2 + 'px'
+      dragging.style.top = startY - dragging.clientHeight / 2 + 'px'
+
+      if (isTouchDevice) {
+        // touch event needs to be bound to event target
+        // otherwise when the dom element is removed
+        // touchmove stops firing
+        e.target.addEventListener('touchmove', handleMove, { passive: false })
+        e.target.addEventListener('touchend', handleEnd)
+      } else {
+        window.addEventListener('mousemove', handleMove)
+        window.addEventListener('mouseup', handleEnd)
+      }
+    }
+  }
+
+  function handleMove(e: EventType) {
+    e.preventDefault()
+    if (!dragging) {
+      return
+    }
+
+    const dx = e instanceof TouchEvent ? e.touches[0].pageX - startX : e.pageX - startX
+    const dy = e instanceof TouchEvent ? e.touches[0].pageY - startY : e.pageY - startY
 
     dragging.style.left = startX + dx - dragging.clientWidth / 2 + 'px'
     dragging.style.top = startY + dy - dragging.clientHeight / 2 + 'px'
@@ -122,7 +129,10 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
     // since the dragging element has pointer events set to none
     // it won't affect our check
     const target = document
-      .elementFromPoint(e.clientX, e.clientY)
+      .elementFromPoint(
+        e instanceof TouchEvent ? e.touches[0].clientX : e.clientX,
+        e instanceof TouchEvent ? e.touches[0].clientY : e.clientY
+      )
       ?.closest('.dragster') as HTMLElement
 
     if (!target) {
@@ -177,7 +187,7 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
     addedPreview = { list: targetListIndex, target: targetIndex }
   }
 
-  function handleMouseUp(e: MouseEvent) {
+  function handleEnd(e: EventType) {
     e.preventDefault()
     if (!dragging || !elem) return
 
@@ -199,18 +209,27 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
     }
 
     cleanUp()
-
-    window.removeEventListener('mousemove', handleMouseMove)
-    window.removeEventListener('mouseup', handleMouseUp)
   }
 
-  function cleanUp() {
+  const removeEventListeners = () => {
+    if (isTouchDevice) {
+      window.removeEventListener('touchmove', handleMove)
+      window.removeEventListener('touchend', handleEnd)
+    } else {
+      window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('mouseup', handleEnd)
+    }
+  }
+
+  const cleanUp = () => {
     originalIndex = -1
     originalListIndex = -1
     addedPreview = null
     targetListIndex = -1
     targetIndex = -1
     originalItem = null
+
+    removeEventListeners()
   }
 
   return {
