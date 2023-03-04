@@ -1,27 +1,21 @@
 /*
   DRAGSTER
-  drag and drop composable
-
-  rules - an element can only be dragged
-  from a drag zone
-
-  and can only be dropped in a drop zone
-  if a drop zone is not specified
-  the item can be dropped in either
-  of the provided lists
+  drag and drop composable for Vue 3
 */
-
 import { onMounted, onUnmounted, type Ref, ref } from 'vue'
-import type { Preview, EventType, IDType } from './types'
+import type { Preview, EventType, IDType, DragsterParameters } from './types'
 
-export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]> } {
-  // can either pass a list of refs or classes, for both drop zones and
-  // lists
+export function useDragster<T extends IDType>({
+  items = [],
+  dropZoneClass = '',
+  itemClass = ''
+}: DragsterParameters<T>): { lists: Ref<T[][]> } {
+  // I like this line to be blank
+  // but prettier doesn't like it
+  // so here's three lines of comments
+  const lists = ref(items) as Ref<T[][]> // reactive list
 
-  // if no drop zones are provided we can assume all of the lists
-  // can accept items, treat them all as dropzones
-
-  const lists = ref(items) as Ref<T[][]>
+  let allElements: NodeList | HTMLElement[] = [] // the actual DOM nodes
   let startingLists = JSON.parse(JSON.stringify(items)) // starting value before dragging
 
   let elem: HTMLElement | null = null // the real element that's currently being tracked
@@ -47,6 +41,7 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
   })
 
   onMounted(() => {
+    allElements = document.querySelectorAll(`.${dropZoneClass}`)
     isTouchDevice = typeof window.ontouchstart !== 'undefined'
 
     isTouchDevice
@@ -57,7 +52,7 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
   function initialiseDrag(e: EventType) {
     e.preventDefault()
     if (e.target instanceof HTMLElement) {
-      elem = e.target?.closest('.dragster') as HTMLElement
+      elem = e.target?.closest(`.${itemClass}`) as HTMLElement
 
       if (!elem) {
         return
@@ -128,14 +123,15 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
     // find out which item we're hovering on
     // since the dragging element has pointer events set to none
     // it won't affect our check
-    const target = document
-      .elementFromPoint(
-        e instanceof TouchEvent ? e.touches[0].clientX : e.clientX,
-        e instanceof TouchEvent ? e.touches[0].clientY : e.clientY
-      )
-      ?.closest('.dragster') as HTMLElement
+    const pointElement = document.elementFromPoint(
+      e instanceof TouchEvent ? e.touches[0].clientX : e.clientX,
+      e instanceof TouchEvent ? e.touches[0].clientY : e.clientY
+    )
+    const target = pointElement?.closest(`.${itemClass}`) as HTMLElement
 
-    if (!target) {
+    const targetElement = pointElement?.closest(`.${dropZoneClass}`) as HTMLElement
+
+    if (!target && !targetElement) {
       targetIndex = -1
       return
     }
@@ -149,6 +145,17 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
 
     // get the target element and assign target indeces
     for (const [i, list] of Object.entries(lists.value)) {
+      // special case for empty list
+      // find out which list this is
+      // by looking at the array from
+      // the given classes
+      if (!target && targetElement) {
+        targetListIndex = Array.from(allElements).findIndex((f) => f === targetElement)
+        targetIndex = 0
+
+        break
+      }
+
       if (!target.getAttribute('id')) {
         break
       }
@@ -202,8 +209,7 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
       lists.value = JSON.parse(JSON.stringify(startingLists))
     } else {
       // ✅✅ SUCCESFULL DRAG ✅✅
-      // the preview has already added the item to
-      // the list
+      // the preview has already added the item to the list
       // if successful then overwrite the starting list
       startingLists = JSON.parse(JSON.stringify(lists.value))
     }
@@ -224,9 +230,9 @@ export function useDragster<T extends IDType>(items: T[][]): { lists: Ref<T[][]>
   const cleanUp = () => {
     originalIndex = -1
     originalListIndex = -1
-    addedPreview = null
     targetListIndex = -1
     targetIndex = -1
+    addedPreview = null
     originalItem = null
 
     removeEventListeners()

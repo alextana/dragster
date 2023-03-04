@@ -28,7 +28,11 @@ const array3 = reactive([
   { id: 2476766, name: 'Molly 🧸' }
 ])
 
-const { lists } = useDragster([array1, array2, array3])
+const { lists } = useDragster({
+  items: [array1, array2, array3],
+  dropZoneClass: 'dragster-dropzone',
+  itemClass: 'dragster'
+})
 </script>
 
 <template>
@@ -36,7 +40,7 @@ const { lists } = useDragster([array1, array2, array3])
     <h1>Dragster</h1>
     <h2>Easy drag and drop</h2>
     <div class="lists">
-      <div class="list-container">
+      <div class="dragster-dropzone">
         <TransitionGroup name="fade" tag="div">
           <div v-for="item in lists[0]" :key="item.id">
             <div :id="item.id.toString()" class="dragster">
@@ -48,7 +52,7 @@ const { lists } = useDragster([array1, array2, array3])
         </TransitionGroup>
       </div>
 
-      <div class="list-container">
+      <div class="dragster-dropzone">
         <TransitionGroup name="fade" tag="div">
           <div v-for="item in lists[1]" :key="item.id">
             <div :id="item.id.toString()" class="dragster">
@@ -60,7 +64,7 @@ const { lists } = useDragster([array1, array2, array3])
         </TransitionGroup>
       </div>
 
-      <div class="list-container">
+      <div class="dragster-dropzone">
         <TransitionGroup name="fade" tag="div">
           <div v-for="item in lists[2]" :key="item.id">
             <div :id="item.id.toString()" class="dragster">
@@ -102,7 +106,8 @@ header {
   text-align: center;
 }
 
-.list-container {
+.dragster-dropzone {
+  min-width: 200px;
   padding: 2rem;
   transition: 0.5s ease;
 

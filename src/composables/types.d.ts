@@ -8,3 +8,8 @@ export type IDType = {
 }
 
 export type EventType = MouseEvent | TouchEvent
+export interface DragsterParameters<T> {
+  items: T[][]
+  dropZoneClass: String
+  itemClass: String
+}
