@@ -28,10 +28,15 @@ const array3 = reactive([
   { id: 2476766, name: 'Molly 🧸' }
 ])
 
-const { lists } = useDragster({
+const { lists, onDragEnd } = useDragster({
   items: [array1, array2, array3],
   dropZoneClass: 'dragster-dropzone',
   itemClass: 'dragster'
+})
+
+onDragEnd(() => {
+  // Do something with the list
+  // API call here
 })
 </script>
 

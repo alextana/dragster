@@ -4,12 +4,18 @@
 */
 import { onMounted, onUnmounted, type Ref, ref } from 'vue'
 import type { Preview, EventType, IDType, DragsterParameters } from './types'
+import { useEventHook } from './utils/useEventHook'
 
 export function useDragster<T extends IDType>({
   items = [],
   dropZoneClass = '',
   itemClass = ''
-}: DragsterParameters<T>): { lists: Ref<T[][]> } {
+}: DragsterParameters<T>): {
+  lists: Ref<T[][]>
+  onDragEnd: (fn: () => void) => {
+    off: () => void
+  }
+} {
   // I like this line to be blank
   // but prettier doesn't like it
   // so here's three lines of comments
@@ -35,6 +41,8 @@ export function useDragster<T extends IDType>({
 
   let previousTarget: HTMLElement | null = null
   let isTouchDevice: boolean = false
+
+  const dragEvent = useEventHook()
 
   onUnmounted(() => {
     removeEventListeners()
@@ -212,6 +220,7 @@ export function useDragster<T extends IDType>({
       // the preview has already added the item to the list
       // if successful then overwrite the starting list
       startingLists = JSON.parse(JSON.stringify(lists.value))
+      dragEvent.trigger()
     }
 
     cleanUp()
@@ -239,6 +248,7 @@ export function useDragster<T extends IDType>({
   }
 
   return {
-    lists: lists
+    lists: lists,
+    onDragEnd: dragEvent.on
   }
 }
