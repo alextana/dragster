@@ -1,21 +1,11 @@
-# Dragster (Package not on npm yet)
+### Dragster VUE
 
-The package isn't on npm yet so if you want to try it you'll have to download the composable and import it manually
+Dragster vue
 
-## Vue 3 composable that allows you to drag and drop elements between lists
-
-Package not ready, usage may change
-
-## Getting started
-
-To start using dragster you have to import it in your vue 3 project, like so:
-
-`import { useDragster } from 'dragster'`
-
-Then you'll have to use `reactive` for your lists, like so:
-
-```javascript
+```vue
+<script setup lang="ts">
 import { reactive } from 'vue'
+import { useDragster } from './composables/dragster'
 
 // First array
 const array1 = reactive([
@@ -34,75 +24,125 @@ const array2 = reactive([
   { id: 785659, name: 'Bluebell 🐳' },
   { id: 246766, name: 'Mabel 🧸' }
 ])
-```
 
-And pass in your lists inside an array as the first parameter of the composable:
+const array3 = reactive([
+  { id: 98745445, name: 'Eloise 🤪' },
+  { id: 65690, name: 'Elvis 🧸' },
+  { id: 3252345, name: 'Alvin 🧸' },
+  { id: 7867659, name: 'Holly 🐳' },
+  { id: 2476766, name: 'Molly 🧸' }
+])
 
-`const { lists } = useDragster([array1, array2, array3])`
+const { lists, onDragEnd } = useDragster({
+  items: [array1, array2, array3],
+  dropZoneClass: 'dragster-dropzone',
+  itemClass: 'dragster'
+})
 
-## Markup
+onDragEnd(() => {
+  // Do something with the list
+  // API call here
+})
+</script>
 
-The only requirements are:
-
-- Make sure every item in the list has a `dragster` class
-- Make sure every item in the list has a unique `id`
-- Make sure your loop is keyed
-
-as an example:
-
-```html
-<div class="lists">
-  <div class="list-container">
-    <TransitionGroup name="fade" tag="div">
-      <div v-for="item in lists[0]" :key="item.id">
-        <div :id="item.id.toString()" class="dragster">
-          <h3>{{ item.name }}</h3>
-        </div>
+<template>
+  <div class="container">
+    <h1>Dragster</h1>
+    <h2>Easy drag and drop</h2>
+    <div class="lists">
+      <div class="dragster-dropzone">
+        <TransitionGroup name="fade" tag="div">
+          <div v-for="item in lists[0]" :key="item.id">
+            <div :id="item.id.toString()" class="dragster">
+              <h3>
+                {{ item.name }}
+              </h3>
+            </div>
+          </div>
+        </TransitionGroup>
       </div>
-    </TransitionGroup>
-  </div>
 
-  <div class="list-container">
-    <TransitionGroup name="fade" tag="div">
-      <div v-for="item in lists[1]" :key="item.id">
-        <div :id="item.id.toString()" class="dragster">
-          <h3>{{ item.name }}</h3>
-        </div>
+      <div class="dragster-dropzone">
+        <TransitionGroup name="fade" tag="div">
+          <div v-for="item in lists[1]" :key="item.id">
+            <div :id="item.id.toString()" class="dragster">
+              <h3>
+                {{ item.name }}
+              </h3>
+            </div>
+          </div>
+        </TransitionGroup>
       </div>
-    </TransitionGroup>
+
+      <div class="dragster-dropzone">
+        <TransitionGroup name="fade" tag="div">
+          <div v-for="item in lists[2]" :key="item.id">
+            <div :id="item.id.toString()" class="dragster">
+              <h3>
+                {{ item.name }}
+              </h3>
+            </div>
+          </div>
+        </TransitionGroup>
+      </div>
+    </div>
   </div>
-</div>
-```
+</template>
 
-And with a simple animation using Transition group:
+<style scoped>
+header {
+  line-height: 1.5;
+}
+.container {
+  text-align: center;
+  height: 100vh;
+  width: 100vw;
+  display: grid;
+  place-content: center;
+}
+.lists {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  height: max-content;
+}
 
-```html
-<style>
-  /* 1. declare transition */
-  .fade-move,
-  .fade-enter-active,
-  .fade-leave-active {
-    transition: all 0.2s ease;
-  }
+.dragster {
+  margin: 1rem;
+  background: black;
+  border-radius: 0.4rem;
+  padding: 1.5rem;
+  margin: 5px auto;
+  text-align: center;
+}
 
-  /* 2. declare enter from and leave to state */
-  .fade-enter-from,
-  .fade-leave-to {
-    opacity: 0;
-  }
+.dragster-dropzone {
+  min-width: 200px;
+  padding: 2rem;
+  transition: 0.5s ease;
 
-  /* 3. ensure leaving items are taken out of layout flow so that moving
+  margin-bottom: 10px;
+  background: #242424;
+  border-radius: 0.4rem;
+}
+
+/* 1. declare transition */
+.fade-move,
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.2s ease;
+}
+
+/* 2. declare enter from and leave to state */
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 3. ensure leaving items are taken out of layout flow so that moving
       animations can be calculated correctly. */
-  .fade-leave-active {
-    position: absolute;
-  }
+.fade-leave-active {
+  position: absolute;
+}
 </style>
 ```
-
-## All set
-
-The package is not finished yet and next on the development list are events emitted on finalised drag so you can easily do operations like API calls and all the good stuff.
-
-## Accessibility
-
-I want to make the plugin accessible so keyboard users will be able to move items around without having to use a mouse, with screen reader support.

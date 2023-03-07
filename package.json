@@ -1,37 +1,22 @@
 {
   "name": "dragdrop",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "A drag and drop library",
+  "main": "index.ts",
   "scripts": {
-    "dev": "vite",
-    "build": "run-p type-check build-only",
-    "preview": "vite preview",
-    "test:unit": "vitest",
-    "build-only": "vite build",
-    "type-check": "vue-tsc --noEmit -p tsconfig.vitest.json --composite false",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-    "format": "prettier --write src/"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "dependencies": {
-    "vue": "^3.2.47"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alextana/dragdrop-lib.git"
   },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/alextana/dragdrop-lib/issues"
+  },
+  "homepage": "https://github.com/alextana/dragdrop-lib#readme",
   "devDependencies": {
-    "@rushstack/eslint-patch": "^1.2.0",
-    "@types/jsdom": "^21.1.0",
-    "@types/node": "^18.14.0",
-    "@vitejs/plugin-vue": "^4.0.0",
-    "@vue/eslint-config-prettier": "^7.1.0",
-    "@vue/eslint-config-typescript": "^11.0.2",
-    "@vue/test-utils": "^2.3.0",
-    "@vue/tsconfig": "^0.1.3",
-    "eslint": "^8.34.0",
-    "eslint-plugin-vue": "^9.9.0",
-    "jsdom": "^21.1.0",
-    "npm-run-all": "^4.1.5",
-    "prettier": "^2.8.4",
-    "typescript": "~4.7.4",
-    "vite": "^4.1.3",
-    "vitest": "^0.28.5",
-    "vue-tsc": "^1.1.5"
+    "vue": "^3.2.47"
   }
 }
