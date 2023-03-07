@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
-import { useDragster } from 'dragster/vue'
+import { useDragster } from '@alextana/dragster/vue'
 
 // First array
 const array1 = reactive([

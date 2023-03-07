@@ -12,6 +12,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@alextana/dragster": "file:../..",
     "vue": "^3.2.47"
   },
   "devDependencies": {
