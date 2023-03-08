@@ -1,6 +1,7 @@
 {
   "name": "@alextana/dragster",
   "version": "1.0.0",
+  "private": false,
   "description": "A drag and drop library",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

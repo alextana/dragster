@@ -5,7 +5,7 @@ Dragster vue
 ```vue
 <script setup lang="ts">
 import { reactive } from 'vue'
-import { useDragster } from './composables/dragster'
+import { useDragster } from '@alextana/dragster/vue'
 
 // First array
 const array1 = reactive([
@@ -13,7 +13,7 @@ const array1 = reactive([
   { id: 456, name: 'Bradley 🧸' },
   { id: 789, name: 'Marvin 🧸' },
   { id: 321, name: 'Simon 🦧' },
-  { id: 654, name: 'Klaus 🧸' }
+  { id: 654, name: 'Klaus 🧸' },
 ])
 
 // Second array
@@ -22,7 +22,7 @@ const array2 = reactive([
   { id: 6590, name: 'Bailey 🧸' },
   { id: 322345, name: 'Peanut 🧸' },
   { id: 785659, name: 'Bluebell 🐳' },
-  { id: 246766, name: 'Mabel 🧸' }
+  { id: 246766, name: 'Mabel 🧸' },
 ])
 
 const array3 = reactive([
@@ -30,13 +30,13 @@ const array3 = reactive([
   { id: 65690, name: 'Elvis 🧸' },
   { id: 3252345, name: 'Alvin 🧸' },
   { id: 7867659, name: 'Holly 🐳' },
-  { id: 2476766, name: 'Molly 🧸' }
+  { id: 2476766, name: 'Molly 🧸' },
 ])
 
 const { lists, onDragEnd } = useDragster({
   items: [array1, array2, array3],
   dropZoneClass: 'dragster-dropzone',
-  itemClass: 'dragster'
+  itemClass: 'dragster',
 })
 
 onDragEnd(() => {
