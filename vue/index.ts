@@ -1,6 +1,10 @@
 /*
-  DRAGSTER
-  drag and drop composable for Vue 3
+  ####################################
+  # Dragster Vue
+  # Drag and drop composable for Vue 3
+  # Author: Alex Tana
+  # License: MIT
+  ####################################
 */
 import { onMounted, onUnmounted, type Ref, ref } from 'vue'
 import type { Preview, EventType, IDType, DragsterParameters } from './types'
@@ -13,6 +17,9 @@ export function useDragster<T extends IDType>({
 }: DragsterParameters<T>): {
   lists: Ref<T[][]>
   onDragEnd: (fn: () => void) => {
+    off: () => void
+  }
+  onDragStart: (fn: () => void) => {
     off: () => void
   }
 } {
@@ -42,6 +49,7 @@ export function useDragster<T extends IDType>({
   let previousTarget: HTMLElement | null = null
   let isTouchDevice: boolean = false
 
+  const dragStartEvent = useEventHook()
   const dragEndEvent = useEventHook()
 
   onUnmounted(() => {
@@ -67,6 +75,7 @@ export function useDragster<T extends IDType>({
       if (!elem) {
         return
       }
+
       dragging = elem?.cloneNode(true) as HTMLElement
 
       if (!dragging) {
@@ -95,10 +104,15 @@ export function useDragster<T extends IDType>({
         lists.value[originalListIndex].splice(originalIndex, 1)
       }
 
+      // fire drag start event
+      dragStartEvent.trigger()
+
       // style the element to be spooky 👻 while dragging
       dragging.style.position = 'absolute'
+      dragging.style.width = elem.clientWidth + 'px'
       dragging.style.zIndex = '1000'
       dragging.style.opacity = '.8'
+      dragging.style.cursor = 'move'
       dragging.style.pointerEvents = 'none'
 
       startX = e instanceof TouchEvent ? e.touches[0].pageX : e.pageX
@@ -240,6 +254,7 @@ export function useDragster<T extends IDType>({
       // the preview has already added the item to the list
       // if successful then overwrite the starting list
       startingLists = JSON.parse(JSON.stringify(lists.value))
+      // drag completed so fire drag end event
       dragEndEvent.trigger()
     }
 
@@ -270,5 +285,6 @@ export function useDragster<T extends IDType>({
   return {
     lists: lists,
     onDragEnd: dragEndEvent.on,
+    onDragStart: dragStartEvent.on,
   }
 }
