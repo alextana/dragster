@@ -69,6 +69,15 @@ export function useDragster<T extends IDType>({
 
   function initialiseDrag(e: EventType) {
     e.preventDefault()
+
+    // detect right mouse click
+    // and return if pressed
+    if (!isTouchDevice) {
+      if (e instanceof MouseEvent && e.button !== 0) {
+        return
+      }
+    }
+
     if (e.target instanceof HTMLElement) {
       elem = e.target?.closest(`.${itemClass}`) as HTMLElement
 
@@ -112,7 +121,6 @@ export function useDragster<T extends IDType>({
       dragging.style.width = elem.clientWidth + 'px'
       dragging.style.zIndex = '1000'
       dragging.style.opacity = '.8'
-      dragging.style.cursor = 'move'
       dragging.style.pointerEvents = 'none'
 
       startX = e instanceof TouchEvent ? e.touches[0].pageX : e.pageX
