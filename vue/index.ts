@@ -14,6 +14,7 @@ export function useDragster<T extends IDType>({
   items = [],
   dropZoneClass = '',
   itemClass = '',
+  animationDuration = 0,
 }: DragsterParameters<T>): {
   lists: Ref<T[][]>
   onDragEnd: (fn: () => void) => {
@@ -48,6 +49,8 @@ export function useDragster<T extends IDType>({
 
   let previousTarget: HTMLElement | null = null
   let isTouchDevice: boolean = false
+
+  let animationRunning = false
 
   const dragStartEvent = useEventHook()
   const dragEndEvent = useEventHook()
@@ -146,6 +149,7 @@ export function useDragster<T extends IDType>({
 
   function handleMove(e: EventType) {
     e.preventDefault()
+
     if (!dragging) {
       return
     }
@@ -171,13 +175,12 @@ export function useDragster<T extends IDType>({
       `.${dropZoneClass}`
     ) as HTMLElement
 
-    if (!target && !targetElement) {
-      targetIndex = -1
+    if (animationRunning) {
       return
     }
 
-    // only do the expensive computation if needed
-    if (previousTarget && target === previousTarget) {
+    if (!target && !targetElement) {
+      targetIndex = -1
       return
     }
 
@@ -193,12 +196,15 @@ export function useDragster<T extends IDType>({
         targetListIndex = Array.from(allElements).findIndex(
           (f) => f === targetElement
         )
-        targetIndex = 0
 
-        break
+        if (lists.value[targetListIndex]?.length > 1) {
+          return
+        }
+
+        targetIndex = 0
       }
 
-      if (!target.getAttribute('id')) {
+      if (!target?.getAttribute('id')) {
         break
       }
 
@@ -219,16 +225,6 @@ export function useDragster<T extends IDType>({
       break
     }
 
-    // 🟡 only let the item back to the original position
-    // if it has previously been on another index
-    if (
-      !addedPreview &&
-      targetIndex === originalIndex &&
-      originalListIndex === targetListIndex
-    ) {
-      return
-    }
-
     // if a preview has been added remove it on the next
     // occurrence
     if (addedPreview) {
@@ -242,6 +238,10 @@ export function useDragster<T extends IDType>({
 
     // keep track of the preview item
     addedPreview = { list: targetListIndex, target: targetIndex }
+
+    if (animationDuration) {
+      runAnimation()
+    }
   }
 
   function handleEnd(e: EventType) {
@@ -277,6 +277,19 @@ export function useDragster<T extends IDType>({
       window.removeEventListener('mousemove', handleMove)
       window.removeEventListener('mouseup', handleEnd)
     }
+  }
+
+  const runAnimation = () => {
+    if (!animationDuration || typeof animationDuration !== 'number') {
+      return
+    }
+
+    animationRunning = true
+
+    setTimeout(() => {
+      animationRunning = false
+    }, Number(animationDuration))
+
   }
 
   const cleanUp = () => {
