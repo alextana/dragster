@@ -27,6 +27,7 @@ The useDragster composable requires a parameters object with the following prope
 - `items` (required): an array of objects representing the items to be dragged and dropped. Each object should have an id property that uniquely identifies the item.
 - `dropZoneClass` (required): a string representing the class to be used for the drop zone elements.
 - `itemClass` (required): a string representing the class to be used for the draggable item elements.
+- `animationDuration` (optional): if you're using an animation with `TransitionGroup` then you'll need to pass the value (in ms) as a Number.
 
 ### Returned object
 
@@ -69,7 +70,8 @@ A quick example of two lists with draggable items would look like this
     const { lists, onDragEnd, onDragStart } = useDragster({
       items: [array1, array2],
       dropZoneClass: 'dragster-dropzone',
-      itemClass: 'dragster'
+      itemClass: 'dragster',
+      animationDuration: 200 // based on the transition declared in css
     })
 
     onDragStart(() => {
