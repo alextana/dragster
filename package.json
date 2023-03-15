@@ -10,7 +10,13 @@
     "type": "git",
     "url": "git+https://github.com/alextana/dragdrop-lib.git"
   },
-  "author": "",
+  "keywords": [
+    "vue",
+    "drag",
+    "drop",
+    "dragster"
+  ],
+  "author": "Alex Tana",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/alextana/dragdrop-lib/issues"
