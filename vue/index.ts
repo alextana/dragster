@@ -47,7 +47,6 @@ export function useDragster<T extends IDType>({
   let originalItem: T | null = null // this is the original item being dragged
   let addedPreview: Preview | null = null // indeces of the preview
 
-  let previousTarget: HTMLElement | null = null
   let isTouchDevice: boolean = false
 
   let animationRunning = false
@@ -184,8 +183,6 @@ export function useDragster<T extends IDType>({
       return
     }
 
-    previousTarget = target
-
     // get the target element and assign target indeces
     for (const [i, list] of Object.entries(lists.value)) {
       // special case for empty list
@@ -194,7 +191,7 @@ export function useDragster<T extends IDType>({
       // the given classes
       if (!target && targetElement) {
         targetListIndex = Array.from(allElements).findIndex(
-          (f) => f === targetElement
+          (f: Node) => f === targetElement
         )
 
         if (lists.value[targetListIndex]?.length > 1) {
@@ -209,7 +206,7 @@ export function useDragster<T extends IDType>({
       }
 
       const found = list.find(
-        (f) => f.id.toString() === target.getAttribute('id')
+        (f: T) => f.id.toString() === target.getAttribute('id')
       )
 
       if (!found) {
@@ -217,7 +214,7 @@ export function useDragster<T extends IDType>({
       }
 
       targetIndex = list.findIndex(
-        (f) => f.id.toString() === target.getAttribute('id')
+        (f: T) => f.id.toString() === target.getAttribute('id')
       )
 
       targetListIndex = Number(i)
@@ -289,7 +286,6 @@ export function useDragster<T extends IDType>({
     setTimeout(() => {
       animationRunning = false
     }, Number(animationDuration))
-
   }
 
   const cleanUp = () => {
