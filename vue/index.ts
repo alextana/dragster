@@ -97,7 +97,7 @@ export function useDragster<T extends IDType>({
       // relative to the lists
       for (const [i, list] of Object.entries(lists.value)) {
         originalIndex = list.findIndex(
-          (f) => f.id.toString() === elem?.getAttribute('id')
+          (f: T) => f.id.toString() === elem?.getAttribute('id')
         )
 
         // if something is found break the loop
