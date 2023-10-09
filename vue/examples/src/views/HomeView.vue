@@ -96,5 +96,6 @@ onDragStart(() => {
   animations can be calculated correctly. */
 .fade-leave-active {
   position: absolute;
+  transition: 0s;
 }
 </style>
