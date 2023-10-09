@@ -1,4 +1,4 @@
-// original version from from https://github.com/vuejs/apollo/blob/v4/packages/vue-apollo-composable/src/util/useEventHook.ts
+// Original version from from https://github.com/vuejs/apollo/blob/v4/packages/vue-apollo-composable/src/util/useEventHook.ts
 // allows me to trigger an event from a composable and use it
 // in the components
 export function useEventHook() {
@@ -7,7 +7,7 @@ export function useEventHook() {
   function on(fn: () => void) {
     fns.push(fn)
     return {
-      off: () => off(fn)
+      off: () => off(fn),
     }
   }
 
@@ -27,6 +27,6 @@ export function useEventHook() {
   return {
     on,
     off,
-    trigger
+    trigger,
   }
 }

@@ -14,7 +14,7 @@ export function useDragster<T extends IDType>({
   items = [],
   dropZoneClass = '',
   itemClass = '',
-  animationDuration = 0,
+  animationDuration = 200,
 }: DragsterParameters<T>): {
   lists: Ref<T[][]>
   onDragEnd: (fn: () => void) => {
@@ -95,7 +95,7 @@ export function useDragster<T extends IDType>({
 
       // find index of the dragged item
       // relative to the lists
-      for (const [i, list] of Object.entries(lists.value)) {
+      for (const [i, list] of Object.entries(lists.value as T[][])) {
         originalIndex = list.findIndex(
           (f: T) => f.id.toString() === elem?.getAttribute('id')
         )
@@ -184,7 +184,7 @@ export function useDragster<T extends IDType>({
     }
 
     // get the target element and assign target indeces
-    for (const [i, list] of Object.entries(lists.value)) {
+    for (const [i, list] of Object.entries(lists.value as T[][])) {
       // special case for empty list
       // find out which list this is
       // by looking at the array from
@@ -255,7 +255,7 @@ export function useDragster<T extends IDType>({
       // restore the list to starting value
       lists.value = JSON.parse(JSON.stringify(startingLists))
     } else {
-      // ✅✅ SUCCESFULL DRAG ✅✅
+      // ✅✅ SUCCESSFUL DRAG ✅✅
       // the preview has already added the item to the list
       // if successful then overwrite the starting list
       startingLists = JSON.parse(JSON.stringify(lists.value))
