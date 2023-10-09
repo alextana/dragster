@@ -12,5 +12,5 @@ export interface DragsterParameters<T> {
   items: T[][]
   dropZoneClass: String
   itemClass: String
-  animationDuration: Number
+  animationDuration?: Number
 }
