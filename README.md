@@ -1,5 +1,8 @@
 # Dragster Vue
 
+<img width="1612" alt="image" src="https://github.com/alextana/dragster/assets/24207888/bb86b629-08f8-4824-95da-b7b77c5f2c65">
+
+
 ## Drag and drop composable for Vue 3
 
 The useDragster composable is a Vue.js composition function that allows easy drag and drop functionality for arrays of items. It requires items and dropZoneClass parameters to be passed in for it to work.
