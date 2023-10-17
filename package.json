@@ -1,6 +1,6 @@
 {
   "name": "@alextana/dragster",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "private": false,
   "description": "A drag and drop library",
   "scripts": {
