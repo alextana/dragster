@@ -29,7 +29,7 @@ export function useDragster<T extends IDType>({
   // so here's three lines of comments
   const lists = ref(items) as Ref<T[][]> // reactive list
 
-  let allElements: Element[] = [] // the actual DOM nodes
+  let allElements: NodeListOf<Element> | null = null // the actual DOM nodes
   let startingLists = JSON.parse(JSON.stringify(items)) // starting value before dragging
 
   let elem: HTMLElement | null = null // the real element that's currently being tracked
@@ -61,21 +61,23 @@ export function useDragster<T extends IDType>({
   })
 
   onMounted(() => {
-    allElements = Array.from(
-      document.getElementsByClassName(`.${dropZoneClass}`)
-    )
+    allElements = document.querySelectorAll(`.${dropZoneClass}`)
+
     if (!allElements.length) return
 
     isTouchDevice = typeof window.ontouchstart !== 'undefined'
 
-    allElements.forEach((element) => {
+    for (const dropzone of allElements) {
       isTouchDevice
-        ? element.addEventListener(
+        ? dropzone.addEventListener(
             'touchstart',
             initialiseDrag as EventListener
           )
-        : element.addEventListener('mousedown', initialiseDrag as EventListener)
-    })
+        : dropzone.addEventListener(
+            'mousedown',
+            initialiseDrag as EventListener
+          )
+    }
   })
 
   function initialiseDrag(e: EventType) {
