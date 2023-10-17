@@ -53,6 +53,7 @@ export function useDragster<T extends IDType>({
 
   const dragStartEvent = useEventHook()
   const dragEndEvent = useEventHook()
+  let container: HTMLElement | null = null
 
   onUnmounted(() => {
     removeEventListeners()
@@ -61,18 +62,23 @@ export function useDragster<T extends IDType>({
   })
 
   onMounted(() => {
+    container = document.querySelector(`.${dropZoneClass}`)
+
+    if (!container) return
     allElements = document.querySelectorAll(`.${dropZoneClass}`)
 
     isTouchDevice = typeof window.ontouchstart !== 'undefined'
 
     isTouchDevice
-      ? window.addEventListener('touchstart', initialiseDrag)
-      : window.addEventListener('mousedown', initialiseDrag)
+      ? container.addEventListener('touchstart', initialiseDrag)
+      : container.addEventListener('mousedown', initialiseDrag)
   })
 
   function initialiseDrag(e: EventType) {
     // detect right mouse click
     // and return if pressed
+    e.preventDefault()
+
     if (!isTouchDevice) {
       if (e instanceof MouseEvent && e.button !== 0) {
         return
