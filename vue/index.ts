@@ -61,11 +61,9 @@ export function useDragster<T extends IDType>({
   })
 
   onMounted(() => {
-    allElements = document.querySelectorAll(
-      `.${dropZoneClass}`
-    ) as NodeListOf<Element>
+    allElements = document.querySelectorAll(`.${dropZoneClass}`)
 
-    if (!allElements.length) return
+    if (allElements === null) return
 
     isTouchDevice = typeof window.ontouchstart !== 'undefined'
 
