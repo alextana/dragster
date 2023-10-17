@@ -38,8 +38,8 @@ export function useDragster<T extends IDType>({
   let startX = 0 // The x-coordinate where the drag started
   let startY = 0 // The y-coordinate where the drag started
 
-  // 🔄 INDECES TO KEEP TRACK OF
-  let originalIndex = -1 // -> index of theelement that is being dragged
+  // 🔄 INDEXES TO KEEP TRACK OF
+  let originalIndex = -1 // -> index of the element that is being dragged
   let originalListIndex = -1 // -> the index of the list that hosted the starting element
   let targetListIndex = -1 // -> index of the list of destination
   let targetIndex = -1 // -> index of the destination item
@@ -56,22 +56,21 @@ export function useDragster<T extends IDType>({
 
   onUnmounted(() => {
     removeEventListeners()
+    dragStartEvent.off
+    dragEndEvent.off
   })
 
   onMounted(() => {
     allElements = document.querySelectorAll(`.${dropZoneClass}`)
+
     isTouchDevice = typeof window.ontouchstart !== 'undefined'
 
     isTouchDevice
-      ? window.addEventListener('touchstart', initialiseDrag, {
-          passive: false,
-        })
+      ? window.addEventListener('touchstart', initialiseDrag)
       : window.addEventListener('mousedown', initialiseDrag)
   })
 
   function initialiseDrag(e: EventType) {
-    e.preventDefault()
-
     // detect right mouse click
     // and return if pressed
     if (!isTouchDevice) {
