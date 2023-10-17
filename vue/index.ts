@@ -63,7 +63,7 @@ export function useDragster<T extends IDType>({
   onMounted(() => {
     allElements = document.querySelectorAll(`.${dropZoneClass}`)
 
-    if (allElements === null) return
+    if (!allElements) return
 
     isTouchDevice = typeof window.ontouchstart !== 'undefined'
 
@@ -280,13 +280,17 @@ export function useDragster<T extends IDType>({
   }
 
   const removeEventListeners = () => {
-    if (isTouchDevice) {
-      window.removeEventListener('touchmove', handleMove)
-      window.removeEventListener('touchend', handleEnd)
-    } else {
-      window.removeEventListener('mousemove', handleMove)
-      window.removeEventListener('mouseup', handleEnd)
-    }
+    if (!allElements) return
+
+    allElements.forEach((dropzone) => {
+      if (isTouchDevice) {
+        dropzone.removeEventListener('touchmove', handleMove)
+        dropzone.removeEventListener('touchend', handleEnd)
+      } else {
+        dropzone.removeEventListener('mousemove', handleMove)
+        dropzone.removeEventListener('mouseup', handleEnd)
+      }
+    })
   }
 
   const runAnimation = () => {
