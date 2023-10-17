@@ -201,6 +201,8 @@ export function useDragster<T extends IDType>({
       // by looking at the array from
       // the given classes
       if (!target && targetElement) {
+        if (!allElements) return
+
         targetListIndex = Array.from(allElements).findIndex(
           (f: Node) => f === targetElement
         )
