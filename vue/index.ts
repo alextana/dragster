@@ -61,7 +61,9 @@ export function useDragster<T extends IDType>({
   })
 
   onMounted(() => {
-    allElements = document.querySelectorAll(`.${dropZoneClass}`)
+    allElements = document.querySelectorAll(
+      `.${dropZoneClass}`
+    ) as NodeListOf<Element>
 
     if (!allElements.length) return
 
