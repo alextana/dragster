@@ -30,41 +30,25 @@ export function useDragster<T extends IDType>({
   }
 } {
   const [lists, setLists] = useState<T[][]>(items)
-
+  const listRef = useRef(lists)
   const allElements = useRef<NodeListOf<Element> | null>(null) // the actual DOM nodes
-  let startingLists = JSON.parse(JSON.stringify(items)) // starting value before dragging
-
-  let elem: HTMLElement | null = null // the real element that's currently being tracked
-  let dragging: HTMLElement | null | undefined = null // the copied element being dragged
-
-  let startX = 0 // The x-coordinate where the drag started
-  let startY = 0 // The y-coordinate where the drag started
-
-  // 🔄 INDEXES TO KEEP TRACK OF
-  let originalIndex = -1 // -> index of the element that is being dragged
-  let originalListIndex = -1 // -> the index of the list that hosted the starting element
-  let targetListIndex = -1 // -> index of the list of destination
-  let targetIndex = -1 // -> index of the destination item
-
-  let originalItem: T | null = null // this is the original item being dragged
-  let addedPreview: Preview | null = null // indeces of the preview
-
   const isTouchDevice = useRef<boolean>(false)
-
-  let animationRunning = false
-
   const dragStartEvent = useEventHook()
   const dragEndEvent = useEventHook()
 
-  const removeEventListeners = () => {
-    if (isTouchDevice.current) {
-      window.removeEventListener('touchmove', handleMove)
-      window.removeEventListener('touchend', handleEnd)
-    } else {
-      window.removeEventListener('mousemove', handleMove)
-      window.removeEventListener('mouseup', handleEnd)
-    }
-  }
+  let startingLists = JSON.parse(JSON.stringify(items)), // starting value before dragging
+    elem: HTMLElement | null = null, // the real element that's currently being tracked
+    dragging: HTMLElement | null | undefined = null, // the copied element being dragged
+    startX = 0, // The x-coordinate where the drag started
+    startY = 0, // The y-coordinate where the drag started
+    // 🔄 INDEXES TO KEEP TRACK OF
+    originalIndex = -1, // -> index of the element that is being dragged
+    originalListIndex = -1, // -> the index of the list that hosted the starting element
+    targetListIndex = -1, // -> index of the list of destination
+    targetIndex = -1, // -> index of the destination item
+    originalItem: T | null = null, // this is the original item being dragged
+    addedPreview: Preview | null = null, // indeces of the preview
+    animationRunning = false
 
   useEffect(() => {
     allElements.current = document.querySelectorAll(`.${dropZoneClass}`)
@@ -86,6 +70,20 @@ export function useDragster<T extends IDType>({
     }
 
     return () => {
+      allElements.current = document.querySelectorAll(`.${dropZoneClass}`)
+
+      if (!allElements.current.length) return
+
+      for (const dropzone of allElements.current) {
+        dropzone.removeEventListener(
+          'touchstart',
+          initialiseDrag as EventListener
+        )
+        dropzone.removeEventListener(
+          'mousedown',
+          initialiseDrag as EventListener
+        )
+      }
       removeEventListeners()
       dragStartEvent.off
       dragEndEvent.off
@@ -93,7 +91,24 @@ export function useDragster<T extends IDType>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function initialiseDrag(e: EventType) {
+  const removeEventListeners = () => {
+    if (!allElements.current) return
+    for (const dropzone of allElements.current) {
+      if (isTouchDevice.current) {
+        dropzone.removeEventListener('touchmove', handleMove as EventListener)
+        dropzone.removeEventListener('touchend', handleEnd as EventListener)
+      } else {
+        dropzone.removeEventListener('mousemove', handleMove as EventListener)
+        dropzone.removeEventListener('mouseup', handleEnd as EventListener)
+      }
+    }
+    window.removeEventListener('mousemove', handleMove)
+    window.removeEventListener('mouseup', handleEnd)
+  }
+
+  listRef.current = lists
+
+  const initialiseDrag = (e: EventType) => {
     // detect right mouse click
     // and return if pressed
     e.preventDefault()
@@ -119,11 +134,10 @@ export function useDragster<T extends IDType>({
 
       // find index of the dragged item
       // relative to the lists
-      for (const [i, list] of Object.entries(lists as T[][])) {
+      for (const [i, list] of Object.entries(listRef.current as T[][])) {
         originalIndex = list.findIndex(
           (f: T) => f.id.toString() === elem?.getAttribute('id')
         )
-
         // if something is found break the loop
         if (originalIndex !== -1) {
           originalListIndex = Number(i)
@@ -133,10 +147,13 @@ export function useDragster<T extends IDType>({
 
       if (!originalItem) {
         originalItem = JSON.parse(
-          JSON.stringify(lists[originalListIndex][originalIndex])
+          JSON.stringify(listRef.current[originalListIndex][originalIndex])
         )
 
-        lists[originalListIndex].splice(originalIndex, 1)
+        const copy = [...listRef.current]
+        copy[originalListIndex].splice(originalIndex, 1)
+        setLists(copy)
+        listRef.current = copy
       }
 
       // fire drag start event
@@ -208,12 +225,14 @@ export function useDragster<T extends IDType>({
     }
 
     // get the target element and assign target indeces
-    for (const [i, list] of Object.entries(lists as T[][])) {
+    for (const [i, list] of Object.entries(listRef.current as T[][])) {
       // special case for empty list
       // find out which list this is
       // by looking at the array from
       // the given classes
-      if (!target && targetElement && allElements.current) {
+      if (!target && targetElement) {
+        if (!allElements.current) return
+
         targetListIndex = Array.from(allElements.current).findIndex(
           (f) => f === targetElement
         )
@@ -249,7 +268,7 @@ export function useDragster<T extends IDType>({
     // if a preview has been added remove it on the next
     // occurrence
     if (addedPreview) {
-      const copy = [...lists]
+      const copy = [...listRef.current]
       copy[addedPreview.list]?.splice(addedPreview.target, 1)
 
       setLists(copy)
@@ -257,7 +276,7 @@ export function useDragster<T extends IDType>({
 
     // add the dragged item to the target list
     if (originalItem) {
-      const copy = [...lists]
+      const copy = [...listRef.current]
       copy[targetListIndex]?.splice(targetIndex, 0, originalItem)
 
       setLists(copy)
@@ -284,11 +303,13 @@ export function useDragster<T extends IDType>({
       // ❌❌ UNSUCCESSFUL DRAG ❌❌
       // restore the list to starting value
       setLists(JSON.parse(JSON.stringify(startingLists)))
+      listRef.current = startingLists
     } else {
       // ✅✅ SUCCESSFUL DRAG ✅✅
       // the preview has already added the item to the list
       // if successful then overwrite the starting list
       startingLists = JSON.parse(JSON.stringify(lists))
+      listRef.current = lists
       // drag completed so fire drag end event
       dragEndEvent.trigger()
     }

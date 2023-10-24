@@ -60,6 +60,14 @@ export function useDragster<T extends IDType>({
   const dragEndEvent = useEventHook()
 
   onUnmounted(() => {
+    allElements?.forEach((dropzone) => {
+      dropzone.removeEventListener(
+        'touchstart',
+        initialiseDrag as EventListener
+      )
+      dropzone.removeEventListener('mousedown', initialiseDrag as EventListener)
+    })
+
     removeEventListeners()
     dragStartEvent.off
     dragEndEvent.off
@@ -296,6 +304,8 @@ export function useDragster<T extends IDType>({
         dropzone.removeEventListener('mouseup', handleEnd)
       }
     })
+    window.removeEventListener('mousemove', handleMove)
+    window.removeEventListener('mouseup', handleEnd)
   }
 
   const runAnimation = () => {
