@@ -1,12 +1,11 @@
 /*
   ####################################
-  # Dragster Vue
-  # Drag and drop composable for Vue 3
+  # Dragster React
+  # Drag and drop hook for React
   # Author: Alex Tana
   # License: MIT
   ####################################
 */
-import { onMounted, onUnmounted, type Ref, ref } from 'vue'
 import type {
   Preview,
   EventType,
@@ -14,6 +13,7 @@ import type {
   DragsterParameters,
 } from '../core/types'
 import { useEventHook } from '../core/utils/useEventHook'
+import { useState, useEffect, useRef } from 'react'
 
 export function useDragster<T extends IDType>({
   items = [],
@@ -21,7 +21,7 @@ export function useDragster<T extends IDType>({
   itemClass = '',
   animationDuration = 200,
 }: DragsterParameters<T>): {
-  lists: Ref<T[][]>
+  lists: T[][]
   onDragEnd: (fn: () => void) => {
     off: () => void
   }
@@ -29,59 +29,36 @@ export function useDragster<T extends IDType>({
     off: () => void
   }
 } {
-  // I like this line to be blank
-  // but prettier doesn't like it
-  // so here's three lines of comments
-  const lists = ref(items) as Ref<T[][]> // reactive list
-
-  let allElements: NodeListOf<HTMLElement> | null = null // the actual DOM nodes
-  let startingLists = JSON.parse(JSON.stringify(items)) // starting value before dragging
-
-  let elem: HTMLElement | null = null // the real element that's currently being tracked
-  let dragging: HTMLElement | null | undefined = null // the copied element being dragged
-
-  let startX = 0 // The x-coordinate where the drag started
-  let startY = 0 // The y-coordinate where the drag started
-
-  // 🔄 INDEXES TO KEEP TRACK OF
-  let originalIndex = -1 // -> index of the element that is being dragged
-  let originalListIndex = -1 // -> the index of the list that hosted the starting element
-  let targetListIndex = -1 // -> index of the list of destination
-  let targetIndex = -1 // -> index of the destination item
-
-  let originalItem: T | null = null // this is the original item being dragged
-  let addedPreview: Preview | null = null // indeces of the preview
-
-  let isTouchDevice: boolean = false
-
-  let animationRunning = false
-
+  const [lists, setLists] = useState<T[][]>(items)
+  const listRef = useRef(lists)
+  const allElements = useRef<NodeListOf<Element> | null>(null) // the actual DOM nodes
+  const isTouchDevice = useRef<boolean>(false)
   const dragStartEvent = useEventHook()
   const dragEndEvent = useEventHook()
 
-  onUnmounted(() => {
-    allElements?.forEach((dropzone) => {
-      dropzone.removeEventListener(
-        'touchstart',
-        initialiseDrag as EventListener
-      )
-      dropzone.removeEventListener('mousedown', initialiseDrag as EventListener)
-    })
+  let startingLists = JSON.parse(JSON.stringify(items)), // starting value before dragging
+    elem: HTMLElement | null = null, // the real element that's currently being tracked
+    dragging: HTMLElement | null | undefined = null, // the copied element being dragged
+    startX = 0, // The x-coordinate where the drag started
+    startY = 0, // The y-coordinate where the drag started
+    // 🔄 INDEXES TO KEEP TRACK OF
+    originalIndex = -1, // -> index of the element that is being dragged
+    originalListIndex = -1, // -> the index of the list that hosted the starting element
+    targetListIndex = -1, // -> index of the list of destination
+    targetIndex = -1, // -> index of the destination item
+    originalItem: T | null = null, // this is the original item being dragged
+    addedPreview: Preview | null = null, // indeces of the preview
+    animationRunning = false
 
-    removeEventListeners()
-    dragStartEvent.off
-    dragEndEvent.off
-  })
+  useEffect(() => {
+    allElements.current = document.querySelectorAll(`.${dropZoneClass}`)
 
-  onMounted(() => {
-    allElements = document.querySelectorAll(`.${dropZoneClass}`)
+    if (!allElements.current.length) return
 
-    if (!allElements) return
+    isTouchDevice.current = typeof window.ontouchstart !== 'undefined'
 
-    isTouchDevice = typeof window.ontouchstart !== 'undefined'
-
-    allElements.forEach((dropzone) => {
-      isTouchDevice
+    for (const dropzone of allElements.current) {
+      isTouchDevice.current
         ? dropzone.addEventListener(
             'touchstart',
             initialiseDrag as EventListener
@@ -90,15 +67,53 @@ export function useDragster<T extends IDType>({
             'mousedown',
             initialiseDrag as EventListener
           )
-    })
-  })
+    }
 
-  function initialiseDrag(e: EventType) {
+    return () => {
+      allElements.current = document.querySelectorAll(`.${dropZoneClass}`)
+
+      if (!allElements.current.length) return
+
+      for (const dropzone of allElements.current) {
+        dropzone.removeEventListener(
+          'touchstart',
+          initialiseDrag as EventListener
+        )
+        dropzone.removeEventListener(
+          'mousedown',
+          initialiseDrag as EventListener
+        )
+      }
+      removeEventListeners()
+      dragStartEvent.off
+      dragEndEvent.off
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const removeEventListeners = () => {
+    if (!allElements.current) return
+    for (const dropzone of allElements.current) {
+      if (isTouchDevice.current) {
+        dropzone.removeEventListener('touchmove', handleMove as EventListener)
+        dropzone.removeEventListener('touchend', handleEnd as EventListener)
+      } else {
+        dropzone.removeEventListener('mousemove', handleMove as EventListener)
+        dropzone.removeEventListener('mouseup', handleEnd as EventListener)
+      }
+    }
+    window.removeEventListener('mousemove', handleMove)
+    window.removeEventListener('mouseup', handleEnd)
+  }
+
+  listRef.current = lists
+
+  const initialiseDrag = (e: EventType) => {
     // detect right mouse click
     // and return if pressed
     e.preventDefault()
 
-    if (!isTouchDevice) {
+    if (!isTouchDevice.current) {
       if (e instanceof MouseEvent && e.button !== 0) {
         return
       }
@@ -119,11 +134,10 @@ export function useDragster<T extends IDType>({
 
       // find index of the dragged item
       // relative to the lists
-      for (const [i, list] of Object.entries(lists.value as T[][])) {
+      for (const [i, list] of Object.entries(listRef.current as T[][])) {
         originalIndex = list.findIndex(
           (f: T) => f.id.toString() === elem?.getAttribute('id')
         )
-
         // if something is found break the loop
         if (originalIndex !== -1) {
           originalListIndex = Number(i)
@@ -133,10 +147,13 @@ export function useDragster<T extends IDType>({
 
       if (!originalItem) {
         originalItem = JSON.parse(
-          JSON.stringify(lists.value[originalListIndex][originalIndex])
+          JSON.stringify(listRef.current[originalListIndex][originalIndex])
         )
 
-        lists.value[originalListIndex].splice(originalIndex, 1)
+        const copy = [...listRef.current]
+        copy[originalListIndex].splice(originalIndex, 1)
+        setLists(copy)
+        listRef.current = copy
       }
 
       // fire drag start event
@@ -157,7 +174,7 @@ export function useDragster<T extends IDType>({
       dragging.style.left = startX - dragging.clientWidth / 2 + 'px'
       dragging.style.top = startY - dragging.clientHeight / 2 + 'px'
 
-      if (isTouchDevice) {
+      if (isTouchDevice.current) {
         // touch event needs to be bound to event target
         // otherwise when the dom element is removed
         // touchmove stops firing
@@ -208,19 +225,19 @@ export function useDragster<T extends IDType>({
     }
 
     // get the target element and assign target indeces
-    for (const [i, list] of Object.entries(lists.value as T[][])) {
+    for (const [i, list] of Object.entries(listRef.current as T[][])) {
       // special case for empty list
       // find out which list this is
       // by looking at the array from
       // the given classes
       if (!target && targetElement) {
-        if (!allElements) return
+        if (!allElements.current) return
 
-        targetListIndex = Array.from(allElements).findIndex(
-          (f: Node) => f === targetElement
+        targetListIndex = Array.from(allElements.current).findIndex(
+          (f) => f === targetElement
         )
 
-        if (lists.value[targetListIndex]?.length > 1) {
+        if (lists[targetListIndex]?.length > 1) {
           return
         }
 
@@ -251,12 +268,18 @@ export function useDragster<T extends IDType>({
     // if a preview has been added remove it on the next
     // occurrence
     if (addedPreview) {
-      lists.value[addedPreview.list]?.splice(addedPreview.target, 1)
+      const copy = [...listRef.current]
+      copy[addedPreview.list]?.splice(addedPreview.target, 1)
+
+      setLists(copy)
     }
 
     // add the dragged item to the target list
     if (originalItem) {
-      lists.value[targetListIndex]?.splice(targetIndex, 0, originalItem)
+      const copy = [...listRef.current]
+      copy[targetListIndex]?.splice(targetIndex, 0, originalItem)
+
+      setLists(copy)
     }
 
     // keep track of the preview item
@@ -279,33 +302,19 @@ export function useDragster<T extends IDType>({
     if (targetIndex === -1) {
       // ❌❌ UNSUCCESSFUL DRAG ❌❌
       // restore the list to starting value
-      lists.value = JSON.parse(JSON.stringify(startingLists))
+      setLists(JSON.parse(JSON.stringify(startingLists)))
+      listRef.current = startingLists
     } else {
       // ✅✅ SUCCESSFUL DRAG ✅✅
       // the preview has already added the item to the list
       // if successful then overwrite the starting list
-      startingLists = JSON.parse(JSON.stringify(lists.value))
+      startingLists = JSON.parse(JSON.stringify(lists))
+      listRef.current = lists
       // drag completed so fire drag end event
       dragEndEvent.trigger()
     }
 
     cleanUp()
-  }
-
-  const removeEventListeners = () => {
-    if (!allElements) return
-
-    allElements.forEach((dropzone) => {
-      if (isTouchDevice) {
-        dropzone.removeEventListener('touchmove', handleMove)
-        dropzone.removeEventListener('touchend', handleEnd)
-      } else {
-        dropzone.removeEventListener('mousemove', handleMove)
-        dropzone.removeEventListener('mouseup', handleEnd)
-      }
-    })
-    window.removeEventListener('mousemove', handleMove)
-    window.removeEventListener('mouseup', handleEnd)
   }
 
   const runAnimation = () => {
