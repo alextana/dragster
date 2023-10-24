@@ -55,7 +55,7 @@ to create the lists.
 `onDragStart` and `onDragEnd` are also available as events, if you need to use them to for example update a value in a database.
 
 
-```react
+```jsx
 import { useDragster } from '@alextana/dragster/react'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 // using FormKit's autoAnimate to animate the list with minimal effort
