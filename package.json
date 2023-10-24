@@ -1,6 +1,6 @@
 {
   "name": "@alextana/dragster",
-  "version": "1.0.20",
+  "version": "1.1.1",
   "private": false,
   "description": "A drag and drop library",
   "scripts": {
@@ -12,9 +12,9 @@
   },
   "keywords": [
     "vue",
+    "dragdrop",
     "drag",
-    "drop",
-    "dragster"
+    "react"
   ],
   "author": "Alex Tana",
   "license": "ISC",
@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/alextana/dragdrop-lib#readme",
   "devDependencies": {
-    "vue": "^3.2.47"
+    "vue": "^3.2.47",
+    "react": "^18.2.0"
   }
 }
