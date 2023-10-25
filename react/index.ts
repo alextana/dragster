@@ -14,6 +14,7 @@ import type {
 } from '../core/types'
 import { useEventHook } from '../core/utils/useEventHook'
 import { useState, useEffect, useRef } from 'react'
+import { isObjSame } from '../core/utils'
 
 export function useDragster<T extends IDType>({
   items = [],
@@ -47,7 +48,8 @@ export function useDragster<T extends IDType>({
     targetListIndex = -1, // -> index of the list of destination
     targetIndex = -1, // -> index of the destination item
     originalItem: T | null = null, // this is the original item being dragged
-    addedPreview: Preview | null = null, // indeces of the preview
+    previousPreview: Preview | null = null, // indeces of the previous preview
+    currentPreview: Preview | null = null, // indeces of the current preview
     animationRunning = false
 
   useEffect(() => {
@@ -265,17 +267,19 @@ export function useDragster<T extends IDType>({
       break
     }
 
+    currentPreview = { list: targetListIndex, target: targetIndex }
+
     // if a preview has been added remove it on the next
     // occurrence
-    if (addedPreview) {
+    if (previousPreview && !isObjSame(previousPreview, currentPreview)) {
       const copy = [...listRef.current]
-      copy[addedPreview.list]?.splice(addedPreview.target, 1)
+      copy[previousPreview.list]?.splice(previousPreview.target, 1)
 
       setLists(copy)
     }
 
     // add the dragged item to the target list
-    if (originalItem) {
+    if (originalItem && !isObjSame(previousPreview, currentPreview)) {
       const copy = [...listRef.current]
       copy[targetListIndex]?.splice(targetIndex, 0, originalItem)
 
@@ -283,7 +287,7 @@ export function useDragster<T extends IDType>({
     }
 
     // keep track of the preview item
-    addedPreview = { list: targetListIndex, target: targetIndex }
+    previousPreview = { list: targetListIndex, target: targetIndex }
 
     if (animationDuration) {
       runAnimation()
@@ -334,7 +338,8 @@ export function useDragster<T extends IDType>({
     originalListIndex = -1
     targetListIndex = -1
     targetIndex = -1
-    addedPreview = null
+    currentPreview = null
+    previousPreview = null
     originalItem = null
 
     removeEventListeners()
