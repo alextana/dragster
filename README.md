@@ -2,10 +2,14 @@
 
 <img width="1056" alt="image" src="https://github.com/alextana/dragster/assets/24207888/103704d7-0a6b-4e89-9f28-9e75c0a7fa9e">
 
-## Drag and drop hook for React, composable for Vue 3 and Svelte action (coming soon).
+## Drag and drop composable for Vue 3, hook for React (BETA) and Svelte action (coming soon).
 
 useDragster is a function that allows easy drag and drop functionality to shuffle arrays of items. It requires items and dropZoneClass parameters to be passed in for it to work.
 
+## React Hook INFO
+The react hook is currently in BETA and not optimised for production, I would advise against using it at this time.
+it requires more than an adapter and will need a full rewrite, I think the API for react might need to be a bit different.
+_COMING SOON_
 
 ## Installation
 
